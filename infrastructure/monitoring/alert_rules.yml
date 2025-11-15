@@ -1,0 +1,226 @@
+# Prometheus告警规则配置
+
+groups:
+- name: gummy-translator-alerts
+  rules:
+  
+  # ============ 服务可用性告警 ============
+  
+  - alert: ServiceDown
+    expr: up == 0
+    for: 1m
+    labels:
+      severity: critical
+      team: sre
+    annotations:
+      summary: "Service {{ $labels.instance }} is down"
+      description: "Service {{ $labels.job }}/{{ $labels.instance }} has been down for more than 1 minute."
+      runbook_url: "https://docs.gummy-translator.com/runbooks/service-down"
+
+  - alert: ServiceHighErrorRate
+    expr: |
+      (
+        rate(http_requests_total{status=~"5.."}[5m]) / 
+        rate(http_requests_total[5m])
+      ) > 0.1
+    for: 5m
+    labels:
+      severity: critical
+      team: backend
+    annotations:
+      summary: "High error rate on {{ $labels.instance }}"
+      description: "Error rate is {{ $value | humanizePercentage }} for {{ $labels.job }}/{{ $labels.instance }}"
+
+  # ============ 性能告警 ============
+  
+  - alert: HighAPILatency
+    expr: |
+      histogram_quantile(0.95, 
+        rate(http_request_duration_seconds_bucket[5m])
+      ) > 2
+    for: 5m
+    labels:
+      severity: warning
+      team: backend
+    annotations:
+      summary: "High API latency on {{ $labels.instance }}"
+      description: "95th percentile latency is {{ $value }}s for {{ $labels.job }}/{{ $labels.instance }}"
+
+  - alert: HighCPUUsage
+    expr: |
+      (
+        100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      ) > 80
+    for: 10m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "High CPU usage on {{ $labels.instance }}"
+      description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+
+  - alert: HighMemoryUsage
+    expr: |
+      (
+        (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / 
+        node_memory_MemTotal_bytes
+      ) > 0.9
+    for: 5m
+    labels:
+      severity: critical
+      team: sre
+    annotations:
+      summary: "High memory usage on {{ $labels.instance }}"
+      description: "Memory usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+  # ============ 数据库告警 ============
+  
+  - alert: PostgreSQLDown
+    expr: pg_up == 0
+    for: 1m
+    labels:
+      severity: critical
+      team: dba
+    annotations:
+      summary: "PostgreSQL is down"
+      description: "PostgreSQL instance {{ $labels.instance }} is down"
+
+  - alert: PostgreSQLTooManyConnections
+    expr: |
+      sum by (instance) (pg_stat_activity_count) / 
+      sum by (instance) (pg_settings_max_connections) > 0.8
+    for: 5m
+    labels:
+      severity: warning
+      team: dba
+    annotations:
+      summary: "PostgreSQL too many connections"
+      description: "PostgreSQL instance {{ $labels.instance }} has {{ $value | humanizePercentage }} connections"
+
+  - alert: PostgreSQLSlowQueries
+    expr: |
+      rate(pg_stat_activity_max_tx_duration[5m]) > 60
+    for: 10m
+    labels:
+      severity: warning
+      team: dba
+    annotations:
+      summary: "PostgreSQL slow queries detected"
+      description: "PostgreSQL instance {{ $labels.instance }} has slow queries"
+
+  # ============ Redis告警 ============
+  
+  - alert: RedisDown
+    expr: redis_up == 0
+    for: 1m
+    labels:
+      severity: critical
+      team: sre
+    annotations:
+      summary: "Redis is down"
+      description: "Redis instance {{ $labels.instance }} is down"
+
+  - alert: RedisHighMemoryUsage
+    expr: |
+      redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+    for: 5m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "Redis high memory usage"
+      description: "Redis instance {{ $labels.instance }} memory usage is {{ $value | humanizePercentage }}"
+
+  # ============ 业务指标告警 ============
+  
+  - alert: TranslationFailureRate
+    expr: |
+      (
+        rate(translation_requests_failed_total[5m]) / 
+        rate(translation_requests_total[5m])
+      ) > 0.05
+    for: 5m
+    labels:
+      severity: warning
+      team: backend
+    annotations:
+      summary: "High translation failure rate"
+      description: "Translation failure rate is {{ $value | humanizePercentage }}"
+
+  - alert: AIAPIFailure
+    expr: |
+      increase(ai_api_requests_failed_total[5m]) > 10
+    for: 2m
+    labels:
+      severity: critical
+      team: backend
+    annotations:
+      summary: "AI API failures detected"
+      description: "More than 10 AI API failures in the last 5 minutes for provider {{ $labels.provider }}"
+
+  - alert: LowTranslationQuality
+    expr: |
+      avg_over_time(translation_quality_score[15m]) < 0.8
+    for: 10m
+    labels:
+      severity: warning
+      team: ml
+    annotations:
+      summary: "Low translation quality detected"
+      description: "Average translation quality score is {{ $value }} for provider {{ $labels.provider }}"
+
+  # ============ 容器和存储告警 ============
+  
+  - alert: ContainerHighCPU
+    expr: |
+      (
+        rate(container_cpu_usage_seconds_total[5m]) * 100
+      ) > 80
+    for: 10m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "Container high CPU usage"
+      description: "Container {{ $labels.name }} CPU usage is {{ $value }}%"
+
+  - alert: ContainerHighMemory
+    expr: |
+      (
+        container_memory_usage_bytes / 
+        container_spec_memory_limit_bytes
+      ) > 0.9
+    for: 5m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "Container high memory usage"
+      description: "Container {{ $labels.name }} memory usage is {{ $value | humanizePercentage }}"
+
+  - alert: DiskSpaceLow
+    expr: |
+      (
+        (node_filesystem_size_bytes - node_filesystem_free_bytes) / 
+        node_filesystem_size_bytes
+      ) > 0.85
+    for: 10m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "Low disk space"
+      description: "Disk space usage is {{ $value | humanizePercentage }} on {{ $labels.instance }}"
+
+  # ============ 网络告警 ============
+  
+  - alert: HighNetworkTraffic
+    expr: |
+      rate(node_network_receive_bytes_total[5m]) > 100000000  # 100MB/s
+    for: 5m
+    labels:
+      severity: warning
+      team: sre
+    annotations:
+      summary: "High network traffic"
+      description: "Network traffic is {{ $value | humanize1024 }}B/s on {{ $labels.instance }}"

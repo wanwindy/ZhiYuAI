@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZhiYUAI 控制台</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <style>
+        .recording { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+        .waveform {
+            height: 56px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 3px;
+        }
+        .waveform-bar {
+            width: 4px;
+            background: #2563eb;
+            border-radius: 2px;
+            animation: wave 1s ease-in-out infinite;
+        }
+        @keyframes wave {
+            0%, 100% { height: 16px; }
+            50% { height: 40px; }
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <header class="bg-white shadow">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-globe text-blue-600 text-2xl"></i>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">ZhiYuAI</h1>
+                    <p class="text-sm text-gray-500">多模态智能翻译与交互平台</p>
+                </div>
+            </div>
+            <div class="text-sm text-gray-600">
+                <div class="font-medium mb-1">服务状态</div>
+                <div id="status" class="flex flex-wrap"></div>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 space-y-8">
+        <!-- Translation -->
+        <section class="bg-white rounded-2xl shadow-xl p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-language text-blue-600 mr-2"></i>文本翻译
+                </h2>
+                <div class="text-sm text-gray-500" id="translationInfo">等待翻译结果...</div>
+            </div>
+            <div class="grid gap-6 md:grid-cols-2">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600">源语言</label>
+                        <select id="sourceLanguage" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="auto">自动检测</option>
+                            <option value="zh">中文</option>
+                            <option value="en">英语</option>
+                            <option value="ja">日语</option>
+                            <option value="ko">韩语</option>
+                            <option value="fr">法语</option>
+                            <option value="de">德语</option>
+                            <option value="es">西班牙语</option>
+                        </select>
+                        <label class="text-sm text-gray-600">目标语言</label>
+                        <select id="targetLanguage" class="flex-1 px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500">
+                            <option value="zh">中文</option>
+                            <option value="en">英语</option>
+                            <option value="ja">日语</option>
+                            <option value="ko">韩语</option>
+                            <option value="fr">法语</option>
+                            <option value="de">德语</option>
+                            <option value="es">西班牙语</option>
+                        </select>
+                    </div>
+                    <textarea id="sourceText" rows="8" placeholder="请输入需要翻译的内容，按 Ctrl+Enter 可以快速翻译..."
+                        class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                    <div class="flex items-center space-x-2">
+                        <button id="translateBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-language mr-2"></i>开始翻译
+                        </button>
+                        <button id="clearTextBtn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                            <i class="fas fa-eraser mr-2"></i>清空
+                        </button>
+                    </div>
+                </div>
+                <div class="space-y-3">
+                    <label class="text-sm text-gray-600">翻译结果</label>
+                    <textarea id="translatedText" rows="8" readonly
+                        class="w-full px-4 py-3 border border-gray-200 rounded-lg bg-gray-50 focus:outline-none resize-none"></textarea>
+                    <div class="flex items-center space-x-2">
+                        <button id="copyBtn" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
+                            <i class="fas fa-copy mr-2"></i>复制结果
+                        </button>
+                        <button id="speakBtn" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                            <i class="fas fa-volume-up mr-2"></i>朗读
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Voice & Camera -->
+        <section class="bg-white rounded-2xl shadow-xl p-6">
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-microphone text-purple-600 mr-2"></i>语音翻译
+                    </h2>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+                        <button id="recordBtn"
+                            class="mx-auto flex items-center justify-center w-24 h-24 rounded-full bg-purple-600 text-white shadow-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-microphone text-4xl"></i>
+                        </button>
+                        <p id="recordStatus" class="mt-4 text-sm text-gray-600">点击开始录音</p>
+                        <div id="waveform" class="waveform hidden mt-4">
+                            <div class="waveform-bar" style="animation-delay: 0s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.1s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.2s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.3s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.4s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.5s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.6s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.7s;"></div>
+                            <div class="waveform-bar" style="animation-delay: 0.8s;"></div>
+                        </div>
+                        <div id="voiceResult" class="mt-6 p-4 bg-white border border-gray-200 rounded-lg text-left text-sm text-gray-700 min-h-[96px]">
+                            实时识别结果将显示在这里
+                        </div>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-camera text-green-600 mr-2"></i>摄像头识别
+                    </h2>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-6 text-center">
+                        <video id="cameraPreview" class="w-full rounded-lg hidden" autoplay playsinline></video>
+                        <div id="cameraPlaceholder"
+                            class="w-full h-64 flex items-center justify-center text-gray-400 border-2 border-dashed border-gray-300 rounded-lg">
+                            <div class="text-center">
+                                <i class="fas fa-camera text-4xl"></i>
+                                <p class="mt-2 text-sm">摄像头预览区</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-center space-x-3 mt-4">
+                            <button id="startCameraBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                                <i class="fas fa-play mr-2"></i>开启摄像头
+                            </button>
+                            <button id="captureBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition disabled:opacity-40" disabled>
+                                <i class="fas fa-camera mr-2"></i>拍照识别
+                            </button>
+                            <button id="stopCameraBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition hidden">
+                                <i class="fas fa-stop mr-2"></i>关闭摄像头
+                            </button>
+                        </div>
+                        <div id="cameraResult" class="mt-6 p-4 bg-white border border-gray-200 rounded-lg text-left text-sm text-gray-700 min-h-[96px]">
+                            图像识别结果将在这里展示
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Scene Analysis & Dialogue -->
+        <section class="bg-white rounded-2xl shadow-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-brain text-indigo-600 mr-2"></i>场景分析与对话
+            </h2>
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="space-y-3">
+                    <label class="text-sm text-gray-600">场景描述</label>
+                    <textarea id="sceneText" rows="5" placeholder="请输入场景描述，如环境、人物或动作等..."
+                        class="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                    <button id="recognizeBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                        <i class="fas fa-search mr-2"></i>识别场景
+                    </button>
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm text-gray-700">
+                        <p class="font-medium mb-2">使用提示</p>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>尽量提供完整句子描述。</li>
+                            <li>可配合摄像头识别结果辅助判断。</li>
+                            <li>支持继续追问获取更多建议。</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm text-gray-600">识别结果</label>
+                        <div id="sceneResult" class="mt-2 p-4 bg-gray-50 border border-gray-200 rounded-lg min-h-[140px] text-sm text-gray-700">
+                            场景识别结果将在这里展示
+                        </div>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4 bg-white space-y-3">
+                        <div class="flex items-center justify-between">
+                            <p class="text-gray-800 font-medium flex items-center">
+                                <i class="fas fa-comments text-indigo-500 mr-2"></i>场景对话助手
+                            </p>
+                            <button id="sceneResetBtn" class="px-3 py-1 text-xs bg-gray-100 text-gray-600 rounded hover:bg-gray-200 transition">
+                                重置对话
+                            </button>
+                        </div>
+                        <div id="sceneChat" class="h-48 overflow-y-auto space-y-3 pr-2 text-sm"></div>
+                        <textarea id="sceneChatInput" rows="3" placeholder="向助手提问，如：正式商务会议该如何开场？"
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+                        <button id="sceneSendBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition">
+                            <i class="fas fa-paper-plane mr-2"></i>发送
+                        </button></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Realtime Scene Dialogue (Video + Voice) -->
+        <section class="bg-white rounded-2xl shadow-xl p-6">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-video text-purple-600 mr-2"></i>实时场景对话（视频 + 语音）
+            </h2>
+            <div class="grid gap-6 lg:grid-cols-2">
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <label class="text-sm text-gray-600">回复语种</label>
+                        <select id="sceneReplyLanguage" class="px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500">
+                            <option value="Chinese">中文</option>
+                            <option value="English">英语</option>
+                            <option value="Japanese">日语</option>
+                            <option value="Korean">韩语</option>
+                            <option value="French">法语</option>
+                            <option value="German">德语</option>
+                            <option value="Spanish">西班牙语</option>
+                        </select>
+                        <button id="sceneLiveStartBtn" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                            <i class="fas fa-record-vinyl mr-2"></i>开始对话
+                        </button>
+                        <button id="sceneLiveStopBtn" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition hidden">
+                            <i class="fas fa-stop mr-2"></i>结束本轮
+                        </button>
+                    </div>
+                    <div class="bg-gray-50 border border-gray-200 rounded-xl p-4">
+                        <p class="text-sm text-gray-600 mb-2">摄像头画面将作为上下文参与对话，建议先开启摄像头。</p>
+                        <div class="text-xs text-gray-500">提示：每 1.5 秒发送一帧以降低带宽。</div>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm text-gray-600">实时转写</label>
+                        <div id="sceneLiveTranscript" class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-lg min-h-[72px] text-sm text-gray-800"></div>
+                    </div>
+                    <div>
+                        <label class="text-sm text-gray-600">助手回复</label>
+                        <div id="sceneLiveAssistantText" class="mt-2 p-3 bg-white border border-gray-200 rounded-lg min-h-[72px] text-sm text-gray-800"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg transform translate-y-full transition-transform duration-300 z-50">
+        <div class="flex items-center">
+            <i id="toastIcon" class="fas fa-info-circle mr-2"></i>
+            <span id="toastMessage">提示信息</span>
+        </div>
+    </div>
+
+    <script src="app.js?v=audio-worklet"></script>
+</body>
+</html>

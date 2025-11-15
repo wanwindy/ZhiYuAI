@@ -1,0 +1,95 @@
+# Prometheus配置文件
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+# 告警规则文件
+rule_files:
+  - "alert_rules.yml"
+
+# 告警管理器配置
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+# 抓取配置
+scrape_configs:
+  # Prometheus自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # 微服务监控
+  - job_name: 'gummy-translator-services'
+    static_configs:
+      - targets: 
+        - 'voice-interaction:8000'
+        - 'scene-recognition:8000'
+        - 'translation:8000'
+        - 'ai-router:8000'
+        - 'user-management:8000'
+        - 'config-management:8000'
+        - 'api-gateway:8000'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+
+  # 基础设施监控
+  - job_name: 'infrastructure'
+    static_configs:
+      - targets:
+        - 'postgres-exporter:9187'
+        - 'redis-exporter:9121'
+        - 'node-exporter:9100'
+    scrape_interval: 30s
+
+  # 容器监控 (如果使用Docker)
+  - job_name: 'docker'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    scrape_interval: 30s
+
+  # 业务指标监控
+  - job_name: 'business-metrics'
+    static_configs:
+      - targets: ['api-gateway:8000']
+    metrics_path: /business-metrics
+    scrape_interval: 60s
+
+  # 自动发现Kubernetes服务 (如果部署在Kubernetes)
+  - job_name: 'kubernetes-pods'
+    kubernetes_sd_configs:
+    - role: pod
+      namespaces:
+        names:
+        - gummy-translator
+    relabel_configs:
+    - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
+      action: keep
+      regex: true
+    - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_path]
+      action: replace
+      target_label: __metrics_path__
+      regex: (.+)
+    - source_labels: [__address__, __meta_kubernetes_pod_annotation_prometheus_io_port]
+      action: replace
+      regex: ([^:]+)(?::\d+)?;(\d+)
+      replacement: $1:$2
+      target_label: __address__
+    - action: labelmap
+      regex: __meta_kubernetes_pod_label_(.+)
+    - source_labels: [__meta_kubernetes_namespace]
+      action: replace
+      target_label: kubernetes_namespace
+    - source_labels: [__meta_kubernetes_pod_name]
+      action: replace
+      target_label: kubernetes_pod_name
+
+# 存储配置
+storage:
+  tsdb:
+    retention.time: 30d
+    retention.size: 10GB

@@ -1,0 +1,41 @@
+name: gummy_translator_mobile
+description: Flutter client for ZhiYUAI (text/voice translation)
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.6
+  dio: ^5.7.0
+  flutter_riverpod: ^2.5.1
+  go_router: ^14.2.7
+  just_audio: ^0.9.37
+  just_audio_background: ^0.0.1-beta.13
+  audio_session: ^0.1.21
+  record: ^5.0.4
+  permission_handler: ^11.3.1
+  shared_preferences: ^2.3.2
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  path_provider: ^2.1.4
+  connectivity_plus: ^6.0.5
+  file_picker: ^8.1.2
+  share_plus: ^10.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+
+dependency_overrides:
+  # Keep platform interface below 1.4.0 to avoid startStream requirement with older record_linux
+  record_platform_interface: 1.3.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/

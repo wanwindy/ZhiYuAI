@@ -1,0 +1,155 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Docker
+.dockerignore
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+.npm
+.eslintcache
+
+# Frontend
+dist/
+build/
+.nuxt
+.next
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Audio files
+*.wav
+*.mp3
+*.pcm
+*.flac
+
+# Model files
+*.pkl
+*.joblib
+*.h5
+*.pb
+*.onnx
+
+# Data files
+*.csv
+*.json
+*.jsonl
+data/
+datasets/
+
+# Config files with secrets
+.env.local
+.env.production
+config/secrets/
+**/secrets.yaml
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Kubernetes secrets
+**/secret*.yaml
+**/secrets/
+
+# Backup files
+*.bak
+*.backup
+
+# Generated files
+generated/
+auto-generated/
+
+# Documentation builds
+docs/_build/
+site/
+
+# Flutter
+**/android/app/debug
+**/android/app/profile
+**/android/app/release
+**/ios/Flutter/flutter_assets/
+**/lib/generated_plugin_registrant.dart
+
+# Monitoring data
+prometheus_data/
+grafana_data/
+elasticsearch_data/
